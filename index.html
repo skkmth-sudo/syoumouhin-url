@@ -1,0 +1,623 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>消耗品URLリスト</title>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#6d5cff">
+  <style>
+    :root{
+      --bg1:#f7f8ff;
+      --bg2:#f2fff9;
+      --card:#ffffff;
+      --text:#111827;
+      --muted:#6b7280;
+      --line:rgba(17,24,39,.12);
+      --accent:#6d5cff;
+      --accent2:#22c55e;
+      --danger:#ef4444;
+      --shadow: 0 18px 50px rgba(17,24,39,.10);
+      --radius: 18px;
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", "Meiryo", sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(1000px 600px at 10% 0%, rgba(109,92,255,.18), transparent 60%),
+        radial-gradient(900px 600px at 90% 10%, rgba(34,197,94,.12), transparent 55%),
+        linear-gradient(180deg, var(--bg1), var(--bg2));
+    }
+
+    .wrap{
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 34px 18px 60px;
+    }
+
+    header{
+      display:flex;
+      gap:14px;
+      align-items:flex-start;
+      justify-content:space-between;
+      margin-bottom: 14px;
+    }
+
+    .title{ display:flex; flex-direction:column; gap:6px; }
+
+    h1{
+      margin:0;
+      font-size: clamp(22px, 3vw, 30px);
+      letter-spacing: .02em;
+    }
+
+    .sub{
+      margin:0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(109,92,255,.08);
+      border: 1px solid rgba(109,92,255,.20);
+      color: rgba(17,24,39,.85);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .pill b{ color: var(--text); font-weight: 800; }
+
+    .card{
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+
+    .toolbar{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      padding: 14px;
+      background: rgba(17,24,39,.02);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .input{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+      width: 100%;
+    }
+
+    input[type="text"], input[type="url"]{
+      appearance:none;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--text);
+      padding: 11px 12px;
+      border-radius: 14px;
+      outline:none;
+      min-width: 240px;
+      box-shadow: inset 0 1px 0 rgba(17,24,39,.03);
+    }
+
+    input:focus{
+      border-color: rgba(109,92,255,.55);
+      box-shadow: 0 0 0 3px rgba(109,92,255,.16);
+    }
+
+    input::placeholder{ color: rgba(17,24,39,.40); }
+
+    .btn{
+      border: 1px solid rgba(109,92,255,.25);
+      background: linear-gradient(135deg, rgba(109,92,255,.95), rgba(34,197,94,.75));
+      color: white;
+      padding: 11px 14px;
+      border-radius: 14px;
+      cursor:pointer;
+      transition: transform .05s ease, filter .2s ease;
+      user-select:none;
+      font-weight: 800;
+      letter-spacing: .02em;
+    }
+
+    .btn:hover{ filter: brightness(1.03); }
+    .btn:active{ transform: translateY(1px); }
+
+    .list{
+      padding: 12px;
+      display:grid;
+      gap: 10px;
+    }
+
+    .row{
+      display:grid;
+      grid-template-columns: 1.0fr 1.8fr auto;
+      gap: 10px;
+      align-items:center;
+      padding: 10px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: rgba(17,24,39,.02);
+    }
+
+    .row:focus-within{
+      border-color: rgba(109,92,255,.55);
+      box-shadow: 0 0 0 3px rgba(109,92,255,.12);
+      background: rgba(109,92,255,.03);
+    }
+
+    .name{ min-width: 160px; }
+    .url{ min-width: 280px; width: 100%; }
+
+    .actions{
+      display:flex;
+      gap: 8px;
+      justify-content:flex-end;
+      flex-wrap:wrap;
+    }
+
+    .mini{
+      padding: 9px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--text);
+      cursor:pointer;
+    }
+
+    .mini:hover{ background: rgba(17,24,39,.03); }
+
+    .mini.danger{
+      border-color: rgba(239,68,68,.25);
+      color: rgba(185,28,28,.95);
+      background: rgba(239,68,68,.06);
+    }
+
+    .mini.danger:hover{ background: rgba(239,68,68,.10); }
+
+    .meta{
+      padding: 10px 14px 14px;
+      color: var(--muted);
+      font-size: 12px;
+      display:flex;
+      gap: 10px;
+      flex-wrap:wrap;
+      justify-content:space-between;
+      border-top: 1px solid var(--line);
+      background: rgba(17,24,39,.01);
+    }
+
+    .toast{
+      position: fixed;
+      left: 50%;
+      bottom: 20px;
+      transform: translateX(-50%);
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(17,24,39,.85);
+      border: 1px solid rgba(255,255,255,.18);
+      color: #fff;
+      font-size: 12px;
+      opacity: 0;
+      pointer-events:none;
+      transition: opacity .25s ease, transform .25s ease;
+      backdrop-filter: blur(10px);
+    }
+
+    .toast.show{ opacity: 1; transform: translateX(-50%) translateY(-3px); }
+
+    @media (max-width: 780px){
+      .row{ grid-template-columns: 1fr; }
+      .actions{ justify-content:flex-start; }
+      input[type="text"], input[type="url"]{ min-width: 200px; width: 100%; }
+      .btn{ width: 100%; justify-content:center; }
+    }
+  </style>
+  <script>
+    // PWA: Service Worker（キャッシュ問題を起こしにくい最小構成）
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("/service-worker.js").catch(() => {});
+      });
+    }
+  </script>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="title">
+        <h1>消耗品 URL リスト</h1>
+        <p class="sub">商品名とURLを入れるだけ。データは <b>同居人と同期</b>（Supabase）されます。</p>
+      </div>
+      <div class="pill" title="保存先">
+        <span>保存：</span><b id="storageLabel">同期（Supabase）</b>
+      </div>
+    </header>
+
+    <section class="card">
+      <div class="toolbar">
+        <div class="input" style="width:100%;">
+          <input id="roomCode" type="text" placeholder="共有コード（例：ABCD12）" style="min-width:200px;" />
+          <button id="createRoomBtn" class="mini" type="button">新規ルーム</button>
+          <button id="joinRoomBtn" class="mini" type="button">参加</button>
+          <span style="color:var(--muted); font-size:12px;">現在のルーム：</span>
+          <b id="roomLabel" style="font-size:12px;">未設定</b>
+        </div>
+        <div class="input" style="width:100%; margin-top:10px;">
+          <input id="newName" type="text" placeholder="例）洗濯洗剤 / シャンプー" />
+          <input id="newUrl" type="url" placeholder="例）https://..." />
+          <button id="addBtn" class="btn">追加</button>
+        </div>
+      </div>
+
+      <div id="list" class="list" aria-live="polite"></div>
+
+      <div class="meta">
+        <div>
+          <span id="count">0件</span>
+          <span style="opacity:.55">・</span>
+          <span>Enterで追加 / 行内編集は自動保存</span>
+        </div>
+        <div style="opacity:.9;">
+          共有：片方が「新規ルーム」→表示された共有コードをもう片方が「参加」に入力
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    // =========================================================
+    // Supabase 同期版（consumables テーブル）
+    // - Vercel の /api/config から SUPABASE_URL / SUPABASE_ANON_KEY を取得
+    // - Anonymous Sign-in
+    // - rooms / room_members の仕組みは買い物メモと同居（同じSupabase）
+    // =========================================================
+
+    // Supabase JS（CDN / UMD）
+    // ※ビルド不要で動かすためにCDNを使います
+    const SUPABASE_JS_CDN = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
+
+    const TABLE = "consumables";
+    const LS_ROOM_ID = "consumables_room_id_v1";
+    const LS_ROOM_CODE = "consumables_room_code_v1";
+
+    const el = {
+      list: document.getElementById("list"),
+      count: document.getElementById("count"),
+      newName: document.getElementById("newName"),
+      newUrl: document.getElementById("newUrl"),
+      addBtn: document.getElementById("addBtn"),
+      toast: document.getElementById("toast"),
+      roomCode: document.getElementById("roomCode"),
+      createRoomBtn: document.getElementById("createRoomBtn"),
+      joinRoomBtn: document.getElementById("joinRoomBtn"),
+      roomLabel: document.getElementById("roomLabel"),
+      storageLabel: document.getElementById("storageLabel"),
+    };
+
+    function toast(msg){
+      el.toast.textContent = msg;
+      el.toast.classList.add("show");
+      clearTimeout(toast._t);
+      toast._t = setTimeout(() => el.toast.classList.remove("show"), 1300);
+    }
+
+    function normalizeUrl(u){
+      const s = (u ?? "").trim();
+      if(!s) return "";
+      if(/^https?:\/\//i.test(s)) return s;
+      return "https://" + s;
+    }
+
+    function isLikelyUrl(u){
+      if(!u) return true;
+      try{ new URL(u); return true; }catch{ return false; }
+    }
+
+    function debounce(fn, ms=450){
+      let t;
+      return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+    }
+
+    function setRoomLabel(roomId){
+      el.roomLabel.textContent = roomId ? roomId : "未設定";
+    }
+
+    // ---- load Supabase script (UMD) ----
+    function loadScript(src){
+      return new Promise((resolve, reject) => {
+        const s = document.createElement("script");
+        s.src = src;
+        s.async = true;
+        s.onload = resolve;
+        s.onerror = reject;
+        document.head.appendChild(s);
+      });
+    }
+
+    async function getConfig(){
+      // /api/config は shopping-memo と同じ方式（Vercel環境変数を返す）
+      const res = await fetch("/api/config", { cache: "no-store" });
+      if(!res.ok) throw new Error("/api/config が見つかりません。Vercelに api/config.js を置いてください");
+      return await res.json();
+    }
+
+    // ---- Supabase client ----
+    let supabase = null;
+    let roomId = localStorage.getItem(LS_ROOM_ID) || "";
+    let roomCode = localStorage.getItem(LS_ROOM_CODE) || "";
+    let items = [];
+    let realtimeChannel = null;
+
+    function parseRpcResult(data){
+      // 返り値の形が環境で違っても拾えるようにする
+      if(!data) return { room_id: null, code: null };
+      if(typeof data === "string") return { room_id: data, code: null };
+      if(Array.isArray(data)) return parseRpcResult(data[0]);
+      if(typeof data === "object"){
+        const rid = data.room_id || data.id || data.roomId || null;
+        const code = data.code || data.invite_code || data.room_code || null;
+        return { room_id: rid, code };
+      }
+      return { room_id: null, code: null };
+    }
+
+    async function ensureAuth(){
+      const { data } = await supabase.auth.getSession();
+      if(data?.session) return;
+      // Anonymous sign-in
+      const { error } = await supabase.auth.signInAnonymously();
+      if(error) throw error;
+    }
+
+    async function refresh(){
+      if(!roomId){
+        items = [];
+        render();
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from(TABLE)
+        .select("id, room_id, name, url, updated_at")
+        .eq("room_id", roomId)
+        .order("updated_at", { ascending: false });
+
+      if(error){
+        toast("読み込みに失敗（ルーム参加できてない可能性）");
+        return;
+      }
+      items = data || [];
+      render();
+    }
+
+    function render(){
+      el.count.textContent = `${items.length}件`;
+      el.list.innerHTML = "";
+
+      for(const it of items){
+        const row = document.createElement("div");
+        row.className = "row";
+
+        const name = document.createElement("input");
+        name.className = "name";
+        name.type = "text";
+        name.value = it.name ?? "";
+        name.placeholder = "商品名";
+
+        const url = document.createElement("input");
+        url.className = "url";
+        url.type = "url";
+        url.value = it.url ?? "";
+        url.placeholder = "URL";
+
+        const actions = document.createElement("div");
+        actions.className = "actions";
+
+        const openBtn = document.createElement("button");
+        openBtn.className = "mini";
+        openBtn.textContent = "開く";
+        openBtn.disabled = !url.value || !isLikelyUrl(normalizeUrl(url.value));
+        openBtn.addEventListener("click", () => {
+          const u = normalizeUrl(url.value);
+          if(!isLikelyUrl(u)) return toast("URLが不正です");
+          window.open(u, "_blank", "noopener,noreferrer");
+        });
+
+        const delBtn = document.createElement("button");
+        delBtn.className = "mini danger";
+        delBtn.textContent = "削除";
+        delBtn.addEventListener("click", async () => {
+          try{
+            const { error } = await supabase.from(TABLE).delete().eq("id", it.id);
+            if(error) throw error;
+            toast("削除しました");
+            // Realtimeで反映されるが、念のため
+            await refresh();
+          }catch{
+            toast("削除に失敗");
+          }
+        });
+
+        actions.append(openBtn, delBtn);
+        row.append(name, url, actions);
+        el.list.append(row);
+
+        const commitName = debounce(async () => {
+          try{
+            const { error } = await supabase
+              .from(TABLE)
+              .update({ name: name.value, updated_at: new Date().toISOString() })
+              .eq("id", it.id);
+            if(error) throw error;
+          }catch{ toast("保存に失敗"); }
+        });
+
+        const commitUrl = debounce(async () => {
+          try{
+            const fixed = normalizeUrl(url.value);
+            if(fixed !== url.value) url.value = fixed;
+
+            const { error } = await supabase
+              .from(TABLE)
+              .update({ url: url.value, updated_at: new Date().toISOString() })
+              .eq("id", it.id);
+            if(error) throw error;
+
+            openBtn.disabled = !url.value || !isLikelyUrl(normalizeUrl(url.value));
+          }catch{ toast("保存に失敗"); }
+        });
+
+        name.addEventListener("input", commitName);
+        url.addEventListener("input", commitUrl);
+        url.addEventListener("blur", commitUrl);
+      }
+    }
+
+    async function addItem(){
+      if(!roomId) return toast("先にルームを作成/参加してください");
+
+      const n = (el.newName.value ?? "").trim();
+      const u = (el.newUrl.value ?? "").trim();
+      if(!n) return toast("商品名を入力してください");
+
+      try{
+        const { error } = await supabase
+          .from(TABLE)
+          .insert({ room_id: roomId, name: n, url: u, updated_at: new Date().toISOString() });
+        if(error) throw error;
+
+        el.newName.value = "";
+        el.newUrl.value = "";
+        el.newName.focus();
+        toast("追加しました");
+        await refresh();
+      }catch{
+        toast("追加に失敗");
+      }
+    }
+
+    async function startRealtime(){
+      if(realtimeChannel){
+        try{ await supabase.removeChannel(realtimeChannel); }catch{}
+        realtimeChannel = null;
+      }
+      if(!roomId) return;
+
+      realtimeChannel = supabase
+        .channel(`rt-${TABLE}-${roomId}`)
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: TABLE, filter: `room_id=eq.${roomId}` },
+          () => refresh()
+        )
+        .subscribe();
+    }
+
+    async function createRoom(){
+      try{
+        // 既存のRPCを利用（買い物メモと同じ）
+        const { data, error } = await supabase.rpc("create_room", {});
+        if(error) throw error;
+
+        const parsed = parseRpcResult(data);
+        if(!parsed.room_id) throw new Error("create_room の返り値が不明");
+
+        roomId = parsed.room_id;
+        if(parsed.code){
+          roomCode = parsed.code;
+          el.roomCode.value = roomCode;
+          localStorage.setItem(LS_ROOM_CODE, roomCode);
+        }
+        localStorage.setItem(LS_ROOM_ID, roomId);
+        setRoomLabel(roomId);
+        toast(parsed.code ? `共有コード：${parsed.code}` : "ルーム作成しました");
+        await startRealtime();
+        await refresh();
+      }catch{
+        toast("ルーム作成に失敗（create_room RPC確認）");
+      }
+    }
+
+    async function joinRoom(){
+      const code = (el.roomCode.value ?? "").trim();
+      if(!code) return toast("共有コードを入力してください");
+
+      try{
+        const { data, error } = await supabase.rpc("join_room", { code });
+        if(error) throw error;
+
+        const parsed = parseRpcResult(data);
+        const rid = parsed.room_id || parsed.code; // 念のため
+        if(!rid) throw new Error("join_room の返り値が不明");
+
+        roomId = rid;
+        roomCode = code;
+        localStorage.setItem(LS_ROOM_ID, roomId);
+        localStorage.setItem(LS_ROOM_CODE, roomCode);
+        setRoomLabel(roomId);
+        toast("参加しました");
+        await startRealtime();
+        await refresh();
+      }catch{
+        toast("参加に失敗（共有コード/ join_room RPC確認）");
+      }
+    }
+
+    async function main(){
+      try{
+        el.storageLabel.textContent = "同期（Supabase）";
+
+        await loadScript(SUPABASE_JS_CDN);
+        const cfg = await getConfig();
+        if(!cfg?.url || !cfg?.anonKey) throw new Error("/api/config の返り値が不正");
+
+        // global: window.supabase
+        supabase = window.supabase.createClient(cfg.url, cfg.anonKey);
+
+        await ensureAuth();
+
+        // 以前のルームがあれば復元
+        if(roomCode){ el.roomCode.value = roomCode; }
+        setRoomLabel(roomId);
+
+        el.addBtn.addEventListener("click", addItem);
+        [el.newName, el.newUrl].forEach(x => x.addEventListener("keydown", (e) => {
+          if(e.key === "Enter") addItem();
+        }));
+
+        el.createRoomBtn.addEventListener("click", createRoom);
+        el.joinRoomBtn.addEventListener("click", joinRoom);
+
+        await startRealtime();
+        await refresh();
+      }catch(e){
+        console.error(e);
+        toast("初期化に失敗（/api/config とVercel環境変数を確認）");
+      }
+    }
+
+    main();
+  </script>
+</body>
+</html>
