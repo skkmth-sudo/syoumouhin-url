@@ -320,9 +320,14 @@
     // =========================================================
 
     // Supabase JS（CDN / UMD）
+    const SDK_CACHE_BUST = "20260219-2";
+
     const SUPABASE_JS_CDNS = [
-      "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js",
-      "https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"
+      // ✅ 最優先：自前同梱（CDNブロック環境でも確実に動く）
+      `/vendor/supabaseClient.js?v=${SDK_CACHE_BUST}`,
+      // フォールバック：CDN
+      `https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js?v=${SDK_CACHE_BUST}`,
+      `https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js?v=${SDK_CACHE_BUST}`
     ];
 
     const TABLE = "consumables";
@@ -401,9 +406,27 @@
       });
     }
 
+    async function preflightIfLocal(src){
+      // ローカル同梱ファイルは 404 などを事前に検出してログに出す
+      try{
+        const u = new URL(src, location.origin);
+        if(u.origin !== location.origin) return { ok: true, status: 200 };
+        const res = await fetch(u.pathname + u.search, { cache: "no-store" });
+        return { ok: res.ok, status: res.status };
+      }catch{
+        return { ok: true, status: 200 };
+      }
+    }
+
     async function loadSupabaseSdk(){
       for(const src of SUPABASE_JS_CDNS){
         try{
+          const pre = await preflightIfLocal(src);
+          if(!pre.ok){
+            logDebug(`Preflight failed: ${src} (HTTP ${pre.status})`);
+            continue;
+          }
+
           const used = await loadScript(src);
           if(window.supabase && typeof window.supabase.createClient === "function"){
             return used;
@@ -412,7 +435,7 @@
           logDebug(e);
         }
       }
-      throw new Error("Supabase SDKの読み込みに失敗（CDN）");
+      throw new Error("Supabase SDKの読み込みに失敗（SDK未取得）→ /vendor/supabase.js がデプロイされているか確認してください");
     }
 
     async function getConfig(){
@@ -423,7 +446,7 @@
     }
 
     // ---- Supabase client ----
-    let supabase = null;
+    let supabaseClient = null;
     let roomId = localStorage.getItem(LS_ROOM_ID) || "";
     let roomCode = localStorage.getItem(LS_ROOM_CODE) || "";
     let items = [];
@@ -714,7 +737,7 @@
         const cfg = await getConfig();
         if(!cfg?.url || !cfg?.anonKey) throw new Error("/api/config の返り値が不正（url/anonKeyが空）");
 
-        supabase = window.supabase.createClient(cfg.url, cfg.anonKey);
+        supabaseClient = window.supabase.createClient(cfg.url, cfg.anonKey);
 
         await ensureAuth();
 
@@ -738,6 +761,10 @@
           msg = `Script error. (${e.target.src})`;
         }
         toast(`初期化に失敗：${msg}`);
+        // 目立つ案内（CDNブロック対策）
+        if(String(msg).includes("/vendor/supabase.js")){
+          toast("対策：/vendor/supabase.js をリポジトリに追加してください");
+        }
       }
     }
 
