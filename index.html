@@ -324,10 +324,10 @@
 
     const SUPABASE_JS_CDNS = [
       // ✅ 最優先：自前同梱（CDNブロック環境でも確実に動く）
-      `/vendor/supabaseClient.js?v=${SDK_CACHE_BUST}`,
-      // フォールバック：CDN
-      `https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabaseClient.js?v=${SDK_CACHE_BUST}`,
-      `https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabaseClient.js?v=${SDK_CACHE_BUST}`
+      `/vendor/supabase.js?v=${SDK_CACHE_BUST}`,
+      // フォールバック：CDN（UMD）
+      `https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js?v=${SDK_CACHE_BUST}`,
+      `https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js?v=${SDK_CACHE_BUST}`
     ];
 
     const TABLE = "consumables";
@@ -435,7 +435,7 @@
           logDebug(e);
         }
       }
-      throw new Error("Supabase SDKの読み込みに失敗（SDK未取得）→ /vendor/supabaseClient.js がデプロイされているか確認してください");
+      throw new Error("Supabase SDKの読み込みに失敗（SDK未取得）→ /vendor/supabase.js がデプロイされているか確認してください");
     }
 
     async function getConfig(){
@@ -478,7 +478,7 @@
         return;
       }
 
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient
         .from(TABLE)
         .select("id, room_id, name, url, updated_at")
         .eq("room_id", roomId)
@@ -547,7 +547,7 @@
 
         const commitName = debounce(async () => {
           try{
-            const { error } = await supabase
+            const { error } = await supabaseClient
               .from(TABLE)
               .update({ name: name.value, updated_at: new Date().toISOString() })
               .eq("id", it.id);
@@ -563,8 +563,7 @@
             const fixed = normalizeUrl(url.value);
             if(fixed !== url.value) url.value = fixed;
 
-            const { error } = await supabase
-              .from(TABLE)
+            const { error } = await supabaseClient.from(TABLE)
               .update({ url: url.value, updated_at: new Date().toISOString() })
               .eq("id", it.id);
             if(error) throw error;
@@ -624,8 +623,7 @@
       if(!n) return toast("商品名を入力してください");
 
       try{
-        const { error } = await supabase
-          .from(TABLE)
+        const { error } = await supabaseClient.from(TABLE)
           .insert({ room_id: roomId, name: n, url: u, updated_at: new Date().toISOString() });
         if(error) throw error;
 
@@ -647,8 +645,7 @@
       }
       if(!roomId) return;
 
-      realtimeChannel = supabase
-        .channel(`rt-${TABLE}-${roomId}`)
+      realtimeChannel = supabaseClient.channel(`rt-${TABLE}-${roomId}`)
         .on(
           "postgres_changes",
           { event: "*", schema: "public", table: TABLE, filter: `room_id=eq.${roomId}` },
@@ -762,8 +759,8 @@
         }
         toast(`初期化に失敗：${msg}`);
         // 目立つ案内（CDNブロック対策）
-        if(String(msg).includes("/vendor/supabaseClient.js")){
-          toast("対策：/vendor/supabaseClient.js をリポジトリに追加してください");
+        if(String(msg).includes("/vendor/supabase.js")){
+          toast("対策：/vendor/supabase.js をリポジトリに追加してください");
         }
       }
     }
