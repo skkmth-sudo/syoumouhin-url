@@ -295,7 +295,7 @@
 
     // Supabase JS（CDN / UMD）
     // ※ビルド不要で動かすためにCDNを使います
-    const SUPABASE_JS_CDN = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
+    const SUPABASE_JS_CDN = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js";
 
     const TABLE = "consumables";
     const LS_ROOM_ID = "consumables_room_id_v1";
@@ -648,7 +648,7 @@
         await refresh();
       }catch(e){
         console.error(e);
-        toast("初期化に失敗（/api/config とVercel環境変数を確認）");
+        toast("初期化に失敗：Supabase初期化/設定を確認");
       }
     }
 
