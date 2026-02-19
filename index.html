@@ -326,8 +326,8 @@
       // ✅ 最優先：自前同梱（CDNブロック環境でも確実に動く）
       `/vendor/supabaseClient.js?v=${SDK_CACHE_BUST}`,
       // フォールバック：CDN
-      `https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js?v=${SDK_CACHE_BUST}`,
-      `https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js?v=${SDK_CACHE_BUST}`
+      `https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabaseClient.js?v=${SDK_CACHE_BUST}`,
+      `https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabaseClient.js?v=${SDK_CACHE_BUST}`
     ];
 
     const TABLE = "consumables";
@@ -435,7 +435,7 @@
           logDebug(e);
         }
       }
-      throw new Error("Supabase SDKの読み込みに失敗（SDK未取得）→ /vendor/supabase.js がデプロイされているか確認してください");
+      throw new Error("Supabase SDKの読み込みに失敗（SDK未取得）→ /vendor/supabaseClient.js がデプロイされているか確認してください");
     }
 
     async function getConfig(){
@@ -465,9 +465,9 @@
     }
 
     async function ensureAuth(){
-      const { data } = await supabase.auth.getSession();
+      const { data } = await supabaseClient.auth.getSession();
       if(data?.session) return;
-      const { error } = await supabase.auth.signInAnonymously();
+      const { error } = await supabaseClient.auth.signInAnonymously();
       if(error) throw error;
     }
 
@@ -531,7 +531,7 @@
         delBtn.textContent = "削除";
         delBtn.addEventListener("click", async () => {
           try{
-            const { error } = await supabase.from(TABLE).delete().eq("id", it.id);
+            const { error } = await supabaseClient.from(TABLE).delete().eq("id", it.id);
             if(error) throw error;
             toast("削除しました");
             await refresh();
@@ -585,7 +585,7 @@
     async function ensureRoomAuto(){
       if(roomId) return true;
       try{
-        const { data, error } = await supabase.rpc("create_room", {});
+        const { data, error } = await supabaseClient.rpc("create_room", {});
         if(error) throw error;
 
         const parsed = parseRpcResult(data);
@@ -642,7 +642,7 @@
 
     async function startRealtime(){
       if(realtimeChannel){
-        try{ await supabase.removeChannel(realtimeChannel); }catch{}
+        try{ await supabaseClient.removeChannel(realtimeChannel); }catch{}
         realtimeChannel = null;
       }
       if(!roomId) return;
@@ -659,7 +659,7 @@
 
     async function createRoom(){
       try{
-        const { data, error } = await supabase.rpc("create_room", {});
+        const { data, error } = await supabaseClient.rpc("create_room", {});
         if(error) throw error;
 
         const parsed = parseRpcResult(data);
@@ -689,7 +689,7 @@
       if(!code) return toast("共有コードを入力してください");
 
       try{
-        const { data, error } = await supabase.rpc("join_room", { code });
+        const { data, error } = await supabaseClient.rpc("join_room", { code });
         if(error) throw error;
 
         const parsed = parseRpcResult(data);
@@ -762,8 +762,8 @@
         }
         toast(`初期化に失敗：${msg}`);
         // 目立つ案内（CDNブロック対策）
-        if(String(msg).includes("/vendor/supabase.js")){
-          toast("対策：/vendor/supabase.js をリポジトリに追加してください");
+        if(String(msg).includes("/vendor/supabaseClient.js")){
+          toast("対策：/vendor/supabaseClient.js をリポジトリに追加してください");
         }
       }
     }
