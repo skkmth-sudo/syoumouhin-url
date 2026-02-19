@@ -494,8 +494,43 @@
       }
     }
 
+    async function ensureRoomAuto(){
+      if(roomId) return true;
+      try{
+        // ルーム未設定でも「1人用」として自動作成して続行できるようにする
+        const { data, error } = await supabase.rpc("create_room", {});
+        if(error) throw error;
+
+        const parsed = parseRpcResult(data);
+        if(!parsed.room_id) throw new Error("create_room の返り値が不明");
+
+        roomId = parsed.room_id;
+        localStorage.setItem(LS_ROOM_ID, roomId);
+        setRoomLabel(roomId);
+
+        if(parsed.code){
+          roomCode = parsed.code;
+          el.roomCode.value = roomCode;
+          localStorage.setItem(LS_ROOM_CODE, roomCode);
+          toast(`（自動）共有コード：${parsed.code}`);
+        }else{
+          toast("（自動）1人用ルームを作成しました");
+        }
+
+        await startRealtime();
+        return true;
+      }catch{
+        toast("ルーム自動作成に失敗（/api/config・環境変数・RPCを確認）");
+        return false;
+      }
+    }
+
     async function addItem(){
-      if(!roomId) return toast("先にルームを作成/参加してください");
+      // ルーム設定なしでも使えるように：未設定なら自動で作成
+      if(!roomId){
+        const ok = await ensureRoomAuto();
+        if(!ok) return;
+      }
 
       const n = (el.newName.value ?? "").trim();
       const u = (el.newUrl.value ?? "").trim();
